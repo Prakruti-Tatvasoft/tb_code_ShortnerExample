@@ -81,8 +81,10 @@ func shorten(e event.Event) uint32 {
 		}
 	}
 
-	bodyResponse.URL = "https://" + bodyRequest.HostDomain + "/r?s=" + urlHashCode
-	bodyResponse.Short = urlHashCode
+	if bodyResponse.Error == "" {
+		bodyResponse.URL = "https://" + bodyRequest.HostDomain + "/r?s=" + urlHashCode
+		bodyResponse.Short = urlHashCode
+	}
 
 	res, err := bodyResponse.MarshalJSON()
 	if err != nil {
