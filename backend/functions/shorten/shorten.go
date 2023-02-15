@@ -44,52 +44,55 @@ func shorten(e event.Event) uint32 {
 	h, err := e.HTTP()
 	if err != nil {
 		bodyResponse.Error = err.Error()
-	}
-
-	bodyData, err := io.ReadAll(h.Body())
-	if err != nil {
-		bodyResponse.Error = err.Error()
-	}
-
-	bodyRequest := &BodyRequest{}
-	err = bodyRequest.UnmarshalJSON(bodyData)
-	if err != nil {
-		bodyResponse.Error = err.Error()
-	}
-
-	if bodyRequest.HostDomain != hostDomain {
-		bodyResponse.Error = "Requested domain is not matched"
-	}
-
-	urlHashCode := multihash.Hash(bodyRequest.URL)
-
-	urlHashCode = strings.ToLower(urlHashCode[len(urlHashCode)-minLen:])
-
-	db, err := database.New("urls")
-	if err != nil {
-		bodyResponse.Error = err.Error()
-	}
-	defer db.Close()
-
-	_, err = db.Get(urlHashCode)
-	if err == nil {
-		bodyResponse.Exists = true
 	} else {
-		err = db.Put(urlHashCode, []byte(bodyRequest.URL))
+
+		bodyData, err := io.ReadAll(h.Body())
 		if err != nil {
 			bodyResponse.Error = err.Error()
+		} else {
+
+			bodyRequest := &BodyRequest{}
+			err = bodyRequest.UnmarshalJSON(bodyData)
+			if err != nil {
+				bodyResponse.Error = err.Error()
+			} else {
+
+				if bodyRequest.HostDomain != hostDomain {
+					bodyResponse.Error = "Requested domain is not matched"
+				} else {
+
+					urlHashCode := multihash.Hash(bodyRequest.URL)
+
+					urlHashCode = strings.ToLower(urlHashCode[len(urlHashCode)-minLen:])
+
+					db, err := database.New("urls")
+					if err != nil {
+						bodyResponse.Error = err.Error()
+					}
+					defer db.Close()
+
+					if bodyResponse.Error == "" {
+						_, err = db.Get(urlHashCode)
+						if err == nil {
+							bodyResponse.Exists = true
+						} else {
+							err = db.Put(urlHashCode, []byte(bodyRequest.URL))
+							if err != nil {
+								bodyResponse.Error = err.Error()
+							}
+						}
+					}
+
+					if bodyResponse.Error == "" {
+						bodyResponse.URL = "https://" + bodyRequest.HostDomain + "/r?s=" + urlHashCode
+						bodyResponse.Short = urlHashCode
+					}
+				}
+			}
 		}
 	}
 
-	if bodyResponse.Error == "" {
-		bodyResponse.URL = "https://" + bodyRequest.HostDomain + "/r?s=" + urlHashCode
-		bodyResponse.Short = urlHashCode
-	}
-
-	res, err := bodyResponse.MarshalJSON()
-	if err != nil {
-		return 1
-	}
+	res, _ := bodyResponse.MarshalJSON()
 
 	h.Write(res)
 	h.Return(200)
