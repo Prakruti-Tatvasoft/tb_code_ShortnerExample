@@ -58,7 +58,7 @@ func shorten(e event.Event) uint32 {
 	}
 
 	if bodyRequest.HostDomain != hostDomain {
-		bodyResponse.Error = "Requested domaing is not matched"
+		bodyResponse.Error = "Requested domain is not matched"
 	}
 
 	urlHashCode := multihash.Hash(bodyRequest.URL)
@@ -81,7 +81,7 @@ func shorten(e event.Event) uint32 {
 		}
 	}
 
-	bodyResponse.URL = "https://" + bodyRequest.HostDomain + "/?s=" + urlHashCode
+	bodyResponse.URL = "https://" + bodyRequest.HostDomain + "/r?s=" + urlHashCode
 	bodyResponse.Short = urlHashCode
 
 	res, err := bodyResponse.MarshalJSON()

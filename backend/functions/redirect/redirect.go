@@ -7,7 +7,7 @@ import (
 	"github.com/taubyte/go-sdk/event"
 )
 
-/* GET /?s=<short> */
+/* GET /r?s=<short> */
 //export redirect
 func redirect(e event.Event) uint32 {
 	h, err := e.HTTP()
